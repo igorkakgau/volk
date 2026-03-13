@@ -3,28 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Галерея добрых волков· голосование + загадка города</title>
+  <title>Добрые волки · голосование 1 раз в 45 мин</title>
   <!-- Bootstrap 5 CSS -->
-  <link 
-href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" 
-rel="stylesheet">
-  <!-- Bootstrap Icons (опционально) -->
-  <link rel="stylesheet" 
-href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.
-min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <style>
-    .card-img-top {
-      height: 320px;
-      object-fit: cover;
+    /* Исправленные стили для изображений */
+    .card {
+      overflow: hidden;
+    }
+
+    .image-container {
+      width: 100%;
+      height: 220px;
+      overflow: hidden;
+      background-color: #f8f9fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
-      transition: transform 0.2s;
-      background-color: #f0f0f0; /* фон пока грузится */
     }
-    .card-img-top:hover {
-      transform: scale(1.02);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+
+    .image-container img {⭐ Рейтинг обновляется мгновенно
+      width: 100%;
+      height: 100%;
+      object-fit: contain; /* Изменено с cover на contain */
+      transition: transform 0.3s ease;
+      background-color: #f8f9fa;
     }
-    /* Эффект "размытия" для скрытого автора */
+
+    .image-container img:hover {
+      transform: scale(1.05);
+    }
+
+    /* Альтернативный вариант: если хотите, чтобы изображение заполняло контейнер без обрезки */
+    .image-container.cover img {
+      object-fit: cover; /* Раскомментируйте если нужно cover */
+    }
+
     .author-hidden {
       filter: blur(4px);
       background-color: #e9ecef;
@@ -35,6 +52,7 @@ min.css">
       transition: filter 0.2s;
       cursor: help;
     }
+
     .author-visible {
       filter: none;
       background-color: #d1e7dd;
@@ -42,19 +60,41 @@ min.css">
       padding: 0 6px;
       border-radius: 6px;
     }
+
     .vote-badge {
       font-size: 1.2rem;
       background-color: #f8f9fa;
       border-radius: 30px;
       padding: 5px 12px;
     }
+
     .city-hint {
       cursor: pointer;
       transition: color 0.2s;
     }
+
     .city-hint:hover {
       color: #0d6efd !important;
       text-decoration: underline;
+    }
+
+    .vote-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .cooldown-timer {
+      font-size: 0.7rem;
+      color: #6c757d;
+      white-space: nowrap;
+      margin-left: 8px;
+    }
+
+    /* Адаптивность для мобильных */
+    @media (max-width: 768px) {
+      .image-container {
+        height: 180px;
+      }
     }
   </style>
 </head>
@@ -63,63 +103,52 @@ min.css">
   <!-- шапка -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
     <div class="container">
-      <a class="navbar-brand" href="#"><i class="bi bi-images me-2"></i>Галерея 
-добрых волков 2025</a>
-      <span class="navbar-text text-white">🖼️ изображения из папки 
-/images</span>
+      <a class="navbar-brand" href="#"><i class="bi bi-images me-2"></i>Галерея добрых волков с таймером</a>
+      <span class="navbar-text text-white">⏳ голосовать можно раз в 45 минут</span>
     </div>
   </nav>
 
   <div class="container">
-    <!-- сообщение-подсказка для пользователя -->
+    <!-- информационное сообщение -->
     <div class="alert alert-info alert-dismissible fade show" role="alert">
-      <i class="bi bi-lightbulb"></i> <strong>Как открыть автора?</strong> 
-Кликни на фото или на строку «Город: ???» и угадай город (регистр не важен).
+      <i class="bi bi-hourglass-split"></i>
+      <strong>Правила голосования:</strong> за каждое изображение можно проголосовать (👍 или 👎) не чаще одного раза в 45 минут.
+      Таймер на кнопках покажет оставшееся время.
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
-    <!-- галерея - карточки будут вставлены сюда -->
+    <!-- галерея -->
     <div class="row g-4" id="galleryContainer"></div>
   </div>
 
   <!-- Модальное окно для ввода города -->
-  <div class="modal fade" id="cityModal" tabindex="-1" 
-aria-labelledby="cityModalLabel" aria-hidden="true">
+  <div class="modal fade" id="cityModal" tabindex="-1" aria-labelledby="cityModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header bg-info text-white">
-          <h5 class="modal-title" id="cityModalLabel"><i class="bi 
-bi-geo-alt"></i> Угадайте город автора</h5>
-          <button type="button" class="btn-close btn-close-white" 
-data-bs-dismiss="modal" aria-label="Закрыть"></button>
+          <h5 class="modal-title" id="cityModalLabel"><i class="bi bi-geo-alt"></i> Угадайте город автора</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
         </div>
         <div class="modal-body">
-          <p class="mb-2">Введите город, в котором живёт автор (подсказка 
-ниже).</p>
-          <input type="text" class="form-control form-control-lg" id="cityInput" 
-placeholder="например, Москва" autocomplete="off">
-          <div class="mt-3 small bg-light p-2 rounded" 
-id="modalImageHint"></div>
+          <p class="mb-2">Введите город, в котором живёт автор (подсказка ниже).</p>
+          <input type="text" class="form-control form-control-lg" id="cityInput" placeholder="например, Москва" autocomplete="off">
+          <div class="mt-3 small bg-light p-2 rounded" id="modalImageHint"></div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" 
-data-bs-dismiss="modal">Отмена</button>
-          <button type="button" class="btn btn-primary" id="submitCityBtn"><i 
-class="bi bi-check2-circle"></i> Проверить</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="button" class="btn btn-primary" id="submitCityBtn"><i class="bi bi-check2-circle"></i> Проверить</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Bootstrap JS + наш скрипт -->
-  <script 
-src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.
-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     (function() {
       // ----- ДАННЫЕ ГАЛЕРЕИ (изображения лежат в папке images) -----
       const imagesData = [
-        {
+      {
           id: 1,
           file: 'kasyanova.jpeg',          // файл в папке images
           alt: 'И что должно думать / Об этих желтых яблоках?',
@@ -184,6 +213,7 @@ js"></script>
           votes: 1
         },
 
+
         {
           id: 9,
           file: 'astahova.jpeg',
@@ -210,13 +240,13 @@ js"></script>
           city: 'Севастополь',
           votes: 1
         },
-          
+
         {
           id: 12,
           file: 'zaburskiy.jpeg',
           alt: 'Он пьет из того же ручья, из которого пили этруски. / И вода не помнит, кто был человеком, а кто зверем./ Она помнит только жажду',
           author: 'Забурский Илья',
-          city: 'Рим',
+          city: 'Астафьевка',
           votes: 1
         },
 
@@ -225,7 +255,7 @@ js"></script>
           file: 'cherepanova.jpeg',
           alt: 'он всегда немного брат, даже если этот брат молчит и смотрит из темноты',
           author: 'Черепанова Ангелина',
-          city: 'Балахта',
+          city: 'Талое',
           votes: 1
         },
 
@@ -234,7 +264,7 @@ js"></script>
           file: 'ilina.jpeg',
           alt: 'Запах талой воды и освобождения',
           author: 'Ильина Полина',
-          city: 'Ачинск',
+          city: 'Казачинское',
           votes: 1
         },
 
@@ -252,15 +282,209 @@ js"></script>
           file: 'karamashev.jpeg',
           alt: 'Запах весны — это запах исчезнувших следов',
           author: 'Карамашев Максим',
-          city: 'Диксон',
+          city: 'Абакан',
+          votes: 1
+        },
+        {
+          id: 17,
+          file: 'suyarov.jpg',
+          alt: 'Запах весны — запах ночи, когда чувства особенно обострены',
+          author: 'Суяров Шохиджахон',
+          city: 'Душанбе',
+          votes: 1
+        },
+        {
+          id: 18,
+          file: 'perelomoova.jpeg',
+          alt: 'Запах весны — запах влажного камня и пробуждающейся земли',
+          author: 'Переломова Анастасия',
+          city: 'Сингапур',
+          votes: 1
+        },
+
+        {
+          id: 19,
+          file: 'mustafina.jpeg',
+          alt: 'Запах весны — запах влажного камня и пробуждающейся земли',
+          author: 'Мустафина Земфира',
+          city: 'Яр',
+          votes: 1
+        },
+        {
+          id: 20,
+          file: 'iislomov.jpeg',
+          alt: 'Запах весны — запах присутствия — невидимое доказательство того, что мир жив',
+          author: 'Исломов Бунёджон',
+          city: 'Душанбе',
+          votes: 1
+        },
+
+        {
+          id: 21,
+          file: 'matushenko_nina.jpeg',
+          alt: 'Запах весны — запах ночи, когда чувства особенно обострены',
+          author: 'Матюшенко Нина',
+          city: 'Минусинск',
+          votes: 1
+        },
+
+        {
+          id: 22,
+          file: 'koptelko.jpeg',
+          alt: 'соединяет человеческое и природное, сон и явь, тепло дома и холод внешнего мира',
+          author: 'Коптелко Дарья',
+          city: 'Байкит',
+          votes: 1
+        },
+        {
+          id: 23,
+          file: 'komarova.jpeg',
+          alt: 'соединяет человеческое и природное',
+          author: 'Комарова Алёна',
+          city: 'Бийск',
+          votes: 1
+        },
+
+        {
+          id: 24,
+          file: 'nepomnyashy.jpeg',
+          alt: 'соединяет сон и явь, тепло дома и холод внешнего мира',
+          author: 'Непомнящий Даниил',
+          city: 'Балтийск',
+          votes: 1
+        },
+
+        {
+          id: 25,
+          file: 'ivanov.jpeg',
+          alt: 'он всегда немного брат, даже если этот брат молчит и смотрит из темноты',
+          author: 'Иванов Илья',
+          city: 'Ачинск',
+          votes: 1
+        },
+          {
+          id: 26,
+          file: 'tockaya.jpeg',
+          alt: 'Если мы проснемся, мы увидим только его тень, скользящую по стене',
+          author: 'Тоцкая Дарья',
+          city: 'Тайшет',
+          votes: 1
+        },
+
+        {
+          id: 27,
+          file: 'koryakina.jpeg',
+          alt: 'Следы зверя и человека на снегу как знак присутствия жизни',
+          author: 'Корякина Ангелина',
+          city: 'Бангкок',
+          votes: 1
+        },
+
+   {
+          id: 28,
+          file: 'radjabov.jpeg',
+          alt: 'Если мы проснемся, мы увидим только его тень, скользящую по стене',
+          author: 'Раджабов Шахзод',
+          city: 'Иркутск',
+          votes: 1
+        },
+
+        {
+          id: 29,
+          file: 'kozlova.jpeg',
+          alt: 'Если мы не проснемся, он ляжет у наших ног и будет ждать',
+          author: 'Козлова Варвара',
+          city: 'Магадан',
+          votes: 1
+        },
+        {
+          id: 30,
+          file: 'agronom_2025.jpg',
+          alt: 'Агрономы с копытами. Осень 2025',
+          author: 'Миндалев И.В.',
+          city: 'Ветлужанка',
           votes: 1
         }
-        ];
+      ];
 
-      // состояние: открыт ли автор (по id)
+      // состояние: открыт ли автор
       const authorRevealed = {};
 
-      // ----- ФУНКЦИЯ ОТРИСОВКИ ГАЛЕРЕИ -----
+      // ----- СОСТОЯНИЕ ГОЛОСОВАНИЯ (localStorage) -----
+      const STORAGE_KEY = 'gallery_vote_timestamps';
+      const COOLDOWN_MS = 45 * 60 * 1000; // 45 минут
+
+      // загружаем сохранённые метки
+      let voteTimestamps = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+
+      function saveVoteTimestamps() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(voteTimestamps));
+      }
+
+      function canVoteNow(imageId) {
+        const lastVote = voteTimestamps[imageId];
+        if (!lastVote) return true;
+        const now = Date.now();
+        return (now - lastVote) >= COOLDOWN_MS;
+      }
+
+      function getRemainingCooldown(imageId) {
+        const lastVote = voteTimestamps[imageId];
+        if (!lastVote) return 0;
+        const now = Date.now();
+        const elapsed = now - lastVote;
+        if (elapsed >= COOLDOWN_MS) return 0;
+        return COOLDOWN_MS - elapsed;
+      }
+
+      function formatCooldown(ms) {
+        if (ms <= 0) return '';
+        const totalSeconds = Math.floor(ms / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      }
+
+      function refreshVoteButtonsState() {
+        imagesData.forEach(img => {
+          const upBtn = document.querySelector(`.vote-btn[data-id="${img.id}"][data-step="1"]`);
+          const downBtn = document.querySelector(`.vote-btn[data-id="${img.id}"][data-step="-1"]`);
+          const container = upBtn?.closest('.btn-group') || downBtn?.closest('.btn-group');
+
+          if (!upBtn || !downBtn) return;
+
+          if (canVoteNow(img.id)) {
+            upBtn.disabled = false;
+            downBtn.disabled = false;
+            const existingTimer = container?.parentNode?.querySelector('.cooldown-timer');
+            if (existingTimer) existingTimer.remove();
+          } else {
+            upBtn.disabled = true;
+            downBtn.disabled = true;
+
+            const remaining = getRemainingCooldown(img.id);
+            const timerText = formatCooldown(remaining);
+
+            let timerSpan = container?.parentNode?.querySelector('.cooldown-timer');
+            if (!timerSpan && container) {
+              timerSpan = document.createElement('small');
+              timerSpan.className = 'cooldown-timer';
+              container.parentNode.insertBefore(timerSpan, container.nextSibling);
+            }
+            if (timerSpan) {
+              timerSpan.innerHTML = `<i class="bi bi-hourglass-bottom"></i> ${timerText}`;
+            }
+          }
+        });
+      }
+
+      function startCooldownUpdater() {
+        setInterval(() => {
+          refreshVoteButtonsState();
+        }, 1000);
+      }
+
+      // ----- ФУНКЦИЯ ОТРИСОВКИ ГАЛЕРЕИ (исправленная) -----
       function renderGallery() {
         const container = document.getElementById('galleryContainer');
         if (!container) return;
@@ -270,45 +494,35 @@ js"></script>
           const isRevealed = authorRevealed[img.id] || false;
           const authorClass = isRevealed ? 'author-visible' : 'author-hidden';
           const lockIcon = isRevealed ? '<i class="bi bi-eye-fill text-success ms-1"></i>' : '<i class="bi bi-incognito text-secondary ms-1"></i>';
-          
-          // Путь к изображению: папка images/ + имя файла
+
           const imagePath = `images/${img.file}`;
 
           html += `
             <div class="col-md-6 col-lg-4">
               <div class="card h-100 shadow border-0">
-                <img src="${imagePath}" class="card-img-top" alt="${img.alt}" 
-data-id="${img.id}" title="кликни, чтобы открыть автора" 
-onerror="this.onerror=null; 
-this.src='https://via.placeholder.com/600x400?text=Ошибка+загрузки'">
+                <div class="image-container" data-id="${img.id}" title="кликни, чтобы открыть автора">
+                  <img src="${imagePath}" alt="${img.alt}" onerror="this.onerror=null; this.src='https://via.placeholder.com/600x400?text=Ошибка+загрузки'">
+                </div>
                 <div class="card-body pb-1">
-                  <div class="d-flex justify-content-between align-items-center 
-mb-2">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="vote-badge border">
-                      <i class="bi bi-heart-fill text-danger me-1"></i> <span 
-id="vote-${img.id}">${img.votes}</span>
+                      <i class="bi bi-heart-fill text-danger me-1"></i> <span id="vote-${img.id}">${img.votes}</span>
                     </span>
-                    <span class="${authorClass} p-1 rounded-3 small" 
-id="author-${img.id}">
-                      <i class="bi bi-person-circle me-1"></i>${img.author} 
-${lockIcon}
+                    <span class="${authorClass} p-1 rounded-3 small" id="author-${img.id}">
+                      <i class="bi bi-person-circle me-1"></i>${img.author} ${lockIcon}
                     </span>
                   </div>
                   <p class="card-text text-secondary">${img.alt}</p>
                 </div>
-                <div class="card-footer bg-transparent d-flex 
-justify-content-between align-items-center">
-                  <small class="text-muted city-hint" data-id="${img.id}" 
-title="нажми чтобы угадать город">
-                    <i class="bi bi-geo-alt-fill"></i> Город: <span 
-class="fw-light">???</span>
+                <div class="card-footer bg-transparent d-flex justify-content-between align-items-center flex-wrap">
+                  <small class="text-muted city-hint" data-id="${img.id}" title="нажми чтобы угадать город">
+                    <i class="bi bi-geo-alt-fill"></i> Город: <span class="fw-light">???</span>
                   </small>
-                  <div class="btn-group btn-group-sm" role="group">
-                    <button class="btn btn-outline-success vote-btn" 
-data-id="${img.id}" data-step="1"><i class="bi bi-hand-thumbs-up"></i></button>
-                    <button class="btn btn-outline-danger vote-btn" 
-data-id="${img.id}" data-step="-1"><i class="bi 
-bi-hand-thumbs-down"></i></button>
+                  <div class="d-flex align-items-center">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <button class="btn btn-outline-success vote-btn" data-id="${img.id}" data-step="1"><i class="bi bi-hand-thumbs-up"></i></button>
+                      <button class="btn btn-outline-danger vote-btn" data-id="${img.id}" data-step="-1"><i class="bi bi-hand-thumbs-down"></i></button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -316,10 +530,11 @@ bi-hand-thumbs-down"></i></button>
           `;
         }
         container.innerHTML = html;
+
         attachEventHandlers();
+        refreshVoteButtonsState();
       }
 
-      // ----- ОТКРЫТЬ АВТОРА (обновить UI) -----
       function revealAuthor(imageId) {
         if (authorRevealed[imageId]) return;
         authorRevealed[imageId] = true;
@@ -332,28 +547,21 @@ bi-hand-thumbs-down"></i></button>
         }
       }
 
-      // ----- ВЫЗОВ МОДАЛКИ ДЛЯ КОНКРЕТНОГО ИЗОБРАЖЕНИЯ -----
       function askCityForImage(imageId) {
         const image = imagesData.find(i => i.id === imageId);
         if (!image) return;
 
-        // если автор уже виден — просто показываем сообщение
         if (authorRevealed[imageId]) {
           alert(`Автор уже открыт: ${image.author}`);
           return;
         }
 
-        // заполняем подсказку
         const hintEl = document.getElementById('modalImageHint');
-        hintEl.innerHTML = `🖼️ <strong>${image.alt}</strong><br>📍 Подсказка: 
-город начинается на <strong>«${image.city.charAt(0)}»</strong>, длина названия: 
-${image.city.length} букв.`;
+        hintEl.innerHTML = `🖼️ <strong>${image.alt}</strong><br>📍 Подсказка: город начинается на <strong>«${image.city.charAt(0)}»</strong>, длина названия: ${image.city.length} букв.`;
 
-        // запоминаем id в модалке
         const modalEl = document.getElementById('cityModal');
         modalEl.dataset.currentImageId = imageId;
 
-        // очищаем поле и показываем
         const inputField = document.getElementById('cityInput');
         inputField.value = '';
         inputField.focus();
@@ -362,7 +570,6 @@ ${image.city.length} букв.`;
         modal.show();
       }
 
-      // ----- ПРОВЕРКА ГОРОДА ИЗ МОДАЛКИ -----
       function checkCity() {
         const modalEl = document.getElementById('cityModal');
         const imageId = parseInt(modalEl.dataset.currentImageId, 10);
@@ -377,7 +584,6 @@ ${image.city.length} букв.`;
           return;
         }
 
-        // сравниваем без учёта регистра
         if (input.toLowerCase() === image.city.toLowerCase()) {
           revealAuthor(imageId);
           bootstrap.Modal.getInstance(modalEl).hide();
@@ -388,26 +594,37 @@ ${image.city.length} букв.`;
         }
       }
 
-      // ----- ГОЛОСОВАНИЕ -----
       function handleVote(imageId, step) {
+        if (!canVoteNow(imageId)) {
+          const remaining = getRemainingCooldown(imageId);
+          const minutes = Math.floor(remaining / 60000);
+          const seconds = Math.floor((remaining % 60000) / 1000);
+          alert(`Голосовать можно будет через ${minutes} мин ${seconds} сек`);
+          return;
+        }
+
         const image = imagesData.find(i => i.id === imageId);
         if (!image) return;
+
         image.votes = Math.max(0, image.votes + step);
         const voteSpan = document.getElementById(`vote-${imageId}`);
         if (voteSpan) voteSpan.innerText = image.votes;
+
+        voteTimestamps[imageId] = Date.now();
+        saveVoteTimestamps();
+
+        refreshVoteButtonsState();
       }
 
-      // ----- ПРИВЯЗКА СОБЫТИЙ ПОСЛЕ РЕНДЕРА -----
       function attachEventHandlers() {
-        // клик по изображению
-        document.querySelectorAll('.card-img-top').forEach(img => {
-          img.addEventListener('click', (e) => {
+        // клик по контейнеру с изображением (исправлено)
+        document.querySelectorAll('.image-container').forEach(container => {
+          container.addEventListener('click', (e) => {
             const id = parseInt(e.currentTarget.dataset.id, 10);
             askCityForImage(id);
           });
         });
 
-        // клик по подсказке "Город: ???"
         document.querySelectorAll('.city-hint').forEach(el => {
           el.addEventListener('click', (e) => {
             const id = parseInt(e.currentTarget.dataset.id, 10);
@@ -415,7 +632,6 @@ ${image.city.length} букв.`;
           });
         });
 
-        // кнопки голосования
         document.querySelectorAll('.vote-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -426,9 +642,8 @@ ${image.city.length} букв.`;
         });
       }
 
-      // ----- ИНИЦИАЛИЗАЦИЯ: обработчики модалки и старт -----
-      document.getElementById('submitCityBtn').addEventListener('click', 
-checkCity);
+      // ----- ИНИЦИАЛИЗАЦИЯ -----
+      document.getElementById('submitCityBtn').addEventListener('click', checkCity);
       document.getElementById('cityInput').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
@@ -436,30 +651,26 @@ checkCity);
         }
       });
 
-      // очистка дата-атрибута при закрытии модалки
       const modalEl = document.getElementById('cityModal');
       modalEl.addEventListener('hidden.bs.modal', () => {
         modalEl.dataset.currentImageId = '';
       });
 
-      // запускаем отрисовку
       renderGallery();
+      startCooldownUpdater();
     })();
   </script>
 
-  <!-- футер с пояснением про локальные файлы -->
+  <!-- футер -->
   <footer class="container mt-5 pt-3 text-muted border-top">
     <div class="row">
       <div class="col-md-8">
-        <p><i class="bi bi-folder"></i> <strong>Важно:</strong> изображения 
-должны лежать в папке <code>images/</code> рядом с этим файлом. Пример: 
-<code>images/mountain.jpg</code> и т.д. Если файл не найден, покажется 
-заглушка.</p>
-        <p><i class="bi bi bi-incognito"></i> Имя автора скрыто, пока не 
-угадаете город.</p>
+        <p><i class="bi bi-folder"></i> <strong>Локальные изображения:</strong> папка <code>images/</code> с файлами: mountain.jpg, waterfall.jpg, flowers.jpg, library.jpg, nightcity.jpg, reflection.jpg.</p>
+        <p><i class="bi bi-hourglass-split"></i> <strong>Ограничение:</strong> не более одного голоса (👍/👎) за изображение в течение 45 минут. Таймер на кнопках.</p>
+        <p><i class="bi bi-image"></i> <strong>Исправлено:</strong> изображения теперь отображаются полностью, без обрезки.</p>
       </div>
       <div class="col-md-4 text-md-end">
-        <p>⭐ Рейтинг: голосуйте стрелками</p>
+        <p>⭐ Рейтинг обновляется мгновенно</p>
       </div>
     </div>
   </footer>
